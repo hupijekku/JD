@@ -21,6 +21,7 @@ namespace JD_Main
         Excel.Range range;
 
         DataTable dt;
+        string[,] taulukko;
 
         public Form1()
         {
@@ -79,11 +80,12 @@ namespace JD_Main
 
                         dgv.Rows.Add(row);
                     }
+                    DGVTaulukkoon();
                 }
                 catch(Exception exc)
                 {
                     MessageBox.Show("Jotain meni pieleen. \n" +
-                        "Suosittelen poistamaan Excel-tiedostosta tyhjät rivit ja sarakkeet \n" +
+                        "Suosittelen poistamaan Excel-tiedostosta tyhjät rivit ja sarakkeet \n\n" +
                         "Jos ei auta, ota yhteyttä Eemeliin, ja näytä tämä: \n" + exc.ToString());
                 }
 
@@ -144,7 +146,7 @@ namespace JD_Main
 
         private void Tallenna_Click(object sender, EventArgs e)
         {
-            dgv.Sort(dgv.Columns[0], ListSortDirection.Ascending);
+            SortDGV();
             dt = new DataTable { TableName = "Henkilöt" };
             foreach(DataGridViewColumn dgc in dgv.Columns)
             {
@@ -194,22 +196,111 @@ namespace JD_Main
 
                 dgv.Rows.Add(row);
             }
+            DGVTaulukkoon();
         }
 
         private void LisaaRivi_Click(object sender, EventArgs e)
         {
-            DataGridViewRow row = new DataGridViewRow();
-            row.CreateCells(dgv);
-            row.Cells[0].Value = dgv.Rows.Count + 1;
-            row.Cells[1].Value = "Ei Paikalla";
-            row.DefaultCellStyle.BackColor = Color.Red;
-            row.DefaultCellStyle.Font = new Font("Arial", 15.0f, GraphicsUnit.Pixel);
-            dgv.Rows.Add(row);
+            try
+            {
+                DataGridViewRow row = new DataGridViewRow();
+                row.CreateCells(dgv);
+                row.Cells[0].Value = dgv.Rows.Count + 1;
+                row.Cells[1].Value = "Ei Paikalla";
+                row.DefaultCellStyle.BackColor = Color.Red;
+                row.DefaultCellStyle.Font = new Font("Arial", 15.0f, GraphicsUnit.Pixel);
+                dgv.Rows.Add(row);
+            }
+            catch(Exception exc)
+            {
+                MessageBox.Show("Ei taulukkoa mihin lisätä riviä? \n\ntai näytä Eemelille: \n\n" + exc.ToString()); 
+            }
+
         }
 
         public void Save()
         {
             Tallenna.PerformClick();
+        }
+
+        public void SortDGV()
+        {
+            dgv.Sort(dgv.Columns[0], ListSortDirection.Ascending);
+        }
+
+        public void DGVTaulukkoon()
+        {
+            SortDGV();
+            int ColCount = dgv.ColumnCount - 1;
+            int RowCount = dgv.RowCount;
+            taulukko = new string[ColCount, RowCount];
+            for (int i = 0; i < ColCount; i++)
+            {
+                for (int j = 0; j < RowCount; j++)
+                {
+                    taulukko[i, j] = dgv.Rows[j].Cells[i + 1].Value.ToString();
+                }
+            }
+        }
+
+        public void TaulukkoDGVeen()
+        {
+            dgv.Rows.Clear();
+            dgv.Refresh();
+            int colCount = taulukko.GetLength(0);
+            int rowCount = taulukko.GetLength(1);
+
+            for (int i = 0; i < rowCount; i++)
+            {
+                DataGridViewRow row = new DataGridViewRow();
+                row.CreateCells(dgv);
+                row.Cells[0].Value = i + 1;
+                row.DefaultCellStyle.BackColor = Color.Red;
+                row.DefaultCellStyle.Font = new Font("Arial", 15.0f, GraphicsUnit.Pixel);
+                for (int j = 0; j < colCount; j++)
+                {
+                    row.Cells[j + 1].Value = taulukko[j, i];
+                }
+                if (row.Cells[1].Value.ToString() == "Paikalla")
+                {
+                    row.DefaultCellStyle.BackColor = Color.Green;
+                }
+
+                dgv.Rows.Add(row);
+            }
+            DGVTaulukkoon();
+        }
+
+        private void Haku_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                TaulukkoDGVeen();
+                string hae = Haku.Text;
+                bool found = false;
+                for (int i = 0; i < dgv.RowCount; i++)
+                {
+                    found = false;
+                    for (int j = 0; j < dgv.ColumnCount; j++)
+                    {
+                        if (dgv.Rows[i].Cells[j].Value.ToString().ToLower().Contains(hae.ToLower()))
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        dgv.Rows.RemoveAt(i);
+                        i--;
+                    }
+                }
+            }
+            catch
+            {
+                Haku.Text = "";
+            }
         }
     }
 }
