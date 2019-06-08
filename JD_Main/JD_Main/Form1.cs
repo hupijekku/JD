@@ -104,7 +104,19 @@ namespace JD_Main
 
         private void muokkaus_Click(object sender, EventArgs e)
         {
-            dgv.ReadOnly = !dgv.ReadOnly;
+            if(dgv.ReadOnly)
+            {
+                dgv.ReadOnly = false;
+                muokkaus.ForeColor = Color.Red;
+                muokkaus.Text = "Muokkaus pois";
+            }
+            else
+            {
+                dgv.ReadOnly = true;
+                muokkaus.ForeColor = Color.Black;
+                muokkaus.Text = "Muokkaus päälle";
+
+            }
         }
 
         private void Lue_Click(object sender, EventArgs e)
@@ -193,6 +205,11 @@ namespace JD_Main
             row.DefaultCellStyle.BackColor = Color.Red;
             row.DefaultCellStyle.Font = new Font("Arial", 15.0f, GraphicsUnit.Pixel);
             dgv.Rows.Add(row);
+        }
+
+        public void Save()
+        {
+            Tallenna.PerformClick();
         }
     }
 }

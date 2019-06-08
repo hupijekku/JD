@@ -111,8 +111,8 @@
             // muokkaus
             // 
             this.muokkaus.Name = "muokkaus";
-            this.muokkaus.Size = new System.Drawing.Size(135, 20);
-            this.muokkaus.Text = "Muokkaus Päälle/Pois";
+            this.muokkaus.Size = new System.Drawing.Size(108, 20);
+            this.muokkaus.Text = "Muokkaus päälle";
             this.muokkaus.Click += new System.EventHandler(this.muokkaus_Click);
             // 
             // Lue

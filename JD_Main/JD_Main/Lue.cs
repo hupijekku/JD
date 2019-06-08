@@ -39,6 +39,7 @@ namespace JD_Main
                         row.Cells[1].Value = "Paikalla";
                     }
                     textBox1.Text = "";
+                    mainForm.Save();
                 }
                 else lb_error.Text = "ID:tä ei löydy";
             }
