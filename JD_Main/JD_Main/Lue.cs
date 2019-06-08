@@ -17,6 +17,8 @@ namespace JD_Main
             InitializeComponent();
         }
 
+        //Get main form and DGV
+        //Used functions from mainForm: EtsiRivi(), Save().
         public DataGridView mainDGV { get; set; }
         public Form1 mainForm { get; set; }
 
@@ -24,6 +26,7 @@ namespace JD_Main
         {
             try
             {
+                //Find row with the ID being read and change it's status
                 lb_error.Text = "";
                 int rowNum = mainForm.EtsiRivi(Int32.Parse(textBox1.Text));
                 if (rowNum != 9999)
@@ -39,8 +42,11 @@ namespace JD_Main
                         row.Cells[1].Value = "Paikalla";
                     }
                     textBox1.Text = "";
+                    //Save changes.
                     mainForm.Save();
                 }
+                //ID too large or 9999, yeah the program doesn't work if you have 10 000 people
+                //That seems very likely..
                 else lb_error.Text = "ID:tä ei löydy";
             }
             catch
