@@ -9,16 +9,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
+using OfficeOpenXml;
 
 namespace JD_Main
 {
     public partial class Form1 : Form
     {
-        
-        Excel.Application xlApp;
-        Excel.Workbook xlWorkbook;
-        Excel.Worksheet xlWorksheet;
-        Excel.Range range;
+        ExcelPackage exl;
         
         //Datatable to store DataGridView in to easily write it to the .xml file
         DataTable dt;
@@ -39,25 +36,17 @@ namespace JD_Main
                 int colCount = 0;
 
                 //Open the excel file and write it's contents to the DGV
-                xlApp = new Excel.Application();
                 OpenFileDialog ofd = new OpenFileDialog();
                 ofd.Filter = "Excel file (*.xls*)|*.xls*";
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
-                    filePath = ofd.FileName;
-                    xlWorkbook = xlApp.Workbooks.Open(
-                        filePath, 0, true, 5, "", "", true,
-                        Microsoft.Office.Interop.Excel.XlPlatform.xlWindows,
-                        "\t", false, false, 0, true, 1, 0
-                    );
+                    exl = new ExcelPackage(new System.IO.FileInfo(ofd.FileName));
 
                     //First worksheet
-                    xlWorksheet = (Excel.Worksheet)xlWorkbook.Worksheets.get_Item(1);
+                    ExcelWorksheet worksheet = exl.Workbook.Worksheets[1];
 
-                    range = xlWorksheet.UsedRange;
-                    rowCount = range.Rows.Count;
-                    //Incrementing by 2, because we are manually adding the first 2 columns.
-                    colCount = range.Columns.Count + 2;
+                    rowCount = worksheet.Dimension.End.Row;
+                    colCount = worksheet.Dimension.End.Column + 2;
 
                     dgv.ColumnCount = colCount;
                     try
@@ -80,9 +69,9 @@ namespace JD_Main
                                 //i + 1, because Excel starts from 1
                                 //j + 1 - the 2 first columns => j - 1
                                 //Replace null with "" to prevent crashing
-                                if ((range.Cells[i + 1, j - 1] as Excel.Range).Value2 != null)
+                                if ((worksheet.Cells[i + 1, j - 1]).Value?.ToString().Trim() != null)
                                 {
-                                    row.Cells[j].Value = (range.Cells[i + 1, j - 1] as Excel.Range).Value2.ToString();
+                                    row.Cells[j].Value = (worksheet.Cells[i + 1, j - 1]).Value?.ToString().Trim();
                                 }
                                 else
                                 {
@@ -103,14 +92,6 @@ namespace JD_Main
                     }
 
                     dgv.Columns[0].Width = 40;
-
-                    //Close Excel to prevent hanging processes ("EXCEL.EXE")
-                    xlWorkbook.Close();
-                    xlApp.Quit();
-
-                    Marshal.ReleaseComObject(xlWorksheet);
-                    Marshal.ReleaseComObject(xlWorkbook);
-                    Marshal.ReleaseComObject(xlApp);
                 }
             }
             catch (Exception ex)
