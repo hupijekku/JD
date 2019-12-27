@@ -14,7 +14,7 @@ namespace JD_Main
 {
     public partial class Form1 : Form
     {
-
+        
         Excel.Application xlApp;
         Excel.Workbook xlWorkbook;
         Excel.Worksheet xlWorksheet;
@@ -32,84 +32,92 @@ namespace JD_Main
 
         private void tuoExcel_click(object sender, EventArgs e)
         {
-            var filePath = string.Empty;
-            int rowCount = 0;
-            int colCount = 0;
-
-            //Open the excel file and write it's contents to the DGV
-            xlApp = new Excel.Application();
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Filter = "Excel file (*.xls*)|*.xls*";
-            if(ofd.ShowDialog() == DialogResult.OK)
+            try
             {
-                filePath = ofd.FileName;
-                xlWorkbook = xlApp.Workbooks.Open(
-                    filePath, 0, true, 5, "", "", true,
-                    Microsoft.Office.Interop.Excel.XlPlatform.xlWindows,
-                    "\t", false, false, 0, true, 1, 0
-                );
+                var filePath = string.Empty;
+                int rowCount = 0;
+                int colCount = 0;
 
-                //First worksheet
-                xlWorksheet = (Excel.Worksheet)xlWorkbook.Worksheets.get_Item(1);
-
-                range = xlWorksheet.UsedRange;
-                rowCount = range.Rows.Count;
-                //Incrementing by 2, because we are manually adding the first 2 columns.
-                colCount = range.Columns.Count + 2;
-
-                dgv.ColumnCount = colCount;
-                try
+                //Open the excel file and write it's contents to the DGV
+                xlApp = new Excel.Application();
+                OpenFileDialog ofd = new OpenFileDialog();
+                ofd.Filter = "Excel file (*.xls*)|*.xls*";
+                if (ofd.ShowDialog() == DialogResult.OK)
                 {
-                    for (int i = 0; i < rowCount; i++)
+                    filePath = ofd.FileName;
+                    xlWorkbook = xlApp.Workbooks.Open(
+                        filePath, 0, true, 5, "", "", true,
+                        Microsoft.Office.Interop.Excel.XlPlatform.xlWindows,
+                        "\t", false, false, 0, true, 1, 0
+                    );
+
+                    //First worksheet
+                    xlWorksheet = (Excel.Worksheet)xlWorkbook.Worksheets.get_Item(1);
+
+                    range = xlWorksheet.UsedRange;
+                    rowCount = range.Rows.Count;
+                    //Incrementing by 2, because we are manually adding the first 2 columns.
+                    colCount = range.Columns.Count + 2;
+
+                    dgv.ColumnCount = colCount;
+                    try
                     {
-                        DataGridViewRow row = new DataGridViewRow();
-                        row.CreateCells(dgv);
-
-                        //Manually adding the first 2 columns
-                        //Incrementing by 1, because ID-cards start from 001 -->
-                        row.Cells[0].Value = i + 1;
-                        row.Cells[1].Value = "Ei paikalla";
-                        row.DefaultCellStyle.BackColor = Color.Red;
-                        row.DefaultCellStyle.Font = new Font("Arial", 15.0f, GraphicsUnit.Pixel);
-
-                        //Creating columns 2 -->
-                        for (int j = 2; j < colCount; j++)
+                        for (int i = 0; i < rowCount; i++)
                         {
-                            //i + 1, because Excel starts from 1
-                            //j + 1 - the 2 first columns => j - 1
-                            //Replace null with "" to prevent crashing
-                            if((range.Cells[i + 1, j - 1] as Excel.Range).Value2 != null)
+                            DataGridViewRow row = new DataGridViewRow();
+                            row.CreateCells(dgv);
+
+                            //Manually adding the first 2 columns
+                            //Incrementing by 1, because ID-cards start from 001 -->
+                            row.Cells[0].Value = i + 1;
+                            row.Cells[1].Value = "Ei paikalla";
+                            row.DefaultCellStyle.BackColor = Color.Red;
+                            row.DefaultCellStyle.Font = new Font("Arial", 15.0f, GraphicsUnit.Pixel);
+
+                            //Creating columns 2 -->
+                            for (int j = 2; j < colCount; j++)
                             {
-                                row.Cells[j].Value = (range.Cells[i + 1, j - 1] as Excel.Range).Value2.ToString();
+                                //i + 1, because Excel starts from 1
+                                //j + 1 - the 2 first columns => j - 1
+                                //Replace null with "" to prevent crashing
+                                if ((range.Cells[i + 1, j - 1] as Excel.Range).Value2 != null)
+                                {
+                                    row.Cells[j].Value = (range.Cells[i + 1, j - 1] as Excel.Range).Value2.ToString();
+                                }
+                                else
+                                {
+                                    row.Cells[j].Value = "";
+                                }
                             }
-                            else
-                            {
-                                row.Cells[j].Value = "";
-                            }
+
+                            dgv.Rows.Add(row);
                         }
-
-                        dgv.Rows.Add(row);
+                        //Write the data to array to save it for search-function
+                        DGVTaulukkoon();
                     }
-                    //Write the data to array to save it for search-function
-                    DGVTaulukkoon();
+                    catch (Exception exc)
+                    {
+                        MessageBox.Show("Jotain meni pieleen. \n" +
+                            "Suosittelen poistamaan Excel-tiedostosta tyhjät rivit ja sarakkeet \n\n" +
+                            "Jos ei auta, ota yhteyttä Eemeliin, ja näytä tämä: \n" + exc.ToString());
+                    }
+
+                    dgv.Columns[0].Width = 40;
+
+                    //Close Excel to prevent hanging processes ("EXCEL.EXE")
+                    xlWorkbook.Close();
+                    xlApp.Quit();
+
+                    Marshal.ReleaseComObject(xlWorksheet);
+                    Marshal.ReleaseComObject(xlWorkbook);
+                    Marshal.ReleaseComObject(xlApp);
                 }
-                catch(Exception exc)
-                {
-                    MessageBox.Show("Jotain meni pieleen. \n" +
-                        "Suosittelen poistamaan Excel-tiedostosta tyhjät rivit ja sarakkeet \n\n" +
-                        "Jos ei auta, ota yhteyttä Eemeliin, ja näytä tämä: \n" + exc.ToString());
-                }
-
-                dgv.Columns[0].Width = 40;
-
-                //Close Excel to prevent hanging processes ("EXCEL.EXE")
-                xlWorkbook.Close();
-                xlApp.Quit();
-
-                Marshal.ReleaseComObject(xlWorksheet);
-                Marshal.ReleaseComObject(xlWorkbook);
-                Marshal.ReleaseComObject(xlApp);
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Virheilmoitus: \n\n" + ex.ToString());
+            }
+            
             
         }
 
